@@ -1,4 +1,4 @@
-# Hypatia-Alternative-Solutions
+
 # Enhancements to Hypatia for Generating Near-Optimal Solutions (NOS)
 
 This repository contains the work from my master's thesis, which focuses on enhancing the Hypatia energy modeling platform to generate near-optimal solutions (NOS). The modified version of Hypatia applies heuristic methods, including crossover and evolution techniques, to explore a diverse decision-space of energy system configurations.
