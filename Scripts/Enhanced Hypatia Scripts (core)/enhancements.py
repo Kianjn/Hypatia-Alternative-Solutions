@@ -109,7 +109,11 @@ def find_technologies(self, new_capacity_path, technology_order_mapping):
             "Elec_distribution", "Bio_oil_supply", "Crude_oil_supply", "NG_supply", "SFF_supply",
             "BW_supply", "Hydrogen_supply", "OP_supply", "Electricity_imports", "Oil_refinery",
             "Bio_refinery", "Transport_biofuels_blending", "BW_CHP_P", "NG_CHP_P", "Transport_mix",
-            "Industry_mix", "Civil_and_agriculture_mix", "Export_mix", "Elec_transmission_distribution"
+            "Industry_mix", "Civil_and_agriculture_mix", "Export_mix", "Elec_transmission_distribution",
+            "SoSCO2_lr", "SoSCO2_agg", "Allam_PP", "Biofuels_mix", "Primary_mix", "Residential_mix",
+            "Services_mix", "Pump_hydro_ST", "Electrochemical_ST", "Hydrogen_ST", "Methane_pyrolysis",
+            "Oil_supply", "Oil_PP", "SFF_PP", "Industrial_mix"
+            
         ]
 
         new_capacity_df = pd.read_csv(new_capacity_path)
@@ -386,8 +390,8 @@ def modify_input_parameters_combine(self, new_capacity_path, total_capacity_path
 
         if reset_specific:
             # If reset_specific is True, reset the capacity limits for max and random technologies only
-            max_tech_col_index = max_order # Column index for max_technology (1-based index)
-            random_tech_col_index = random_order # Column index for random_technology (1-based index)
+            max_tech_col_index = max_order  # Column index for max_technology (1-based index)
+            random_tech_col_index = random_order  # Column index for random_technology (1-based index)
 
             # Set the minimum capacity for max_technology and random_technology to zero
             min_totalcap_df.iloc[3:, max_tech_col_index] = 0
@@ -401,20 +405,23 @@ def modify_input_parameters_combine(self, new_capacity_path, total_capacity_path
             years = min_totalcap_df.iloc[3:, 0].tolist()
 
             # Find the column indices for max and random technologies based on their order
-            max_tech_col_index = max_order
-            random_tech_col_index = random_order
+            max_tech_col_index = max_order 
+            random_tech_col_index = random_order 
 
             # Loop through the years and modify the capacity values
             for i, year in enumerate(years):
                 if i == len(years) - 1:  # Only modify the last year for random technology
-                    new_min_value = T2 + C  # Adjust the minimum capacity for random_technology
-                    min_totalcap_df.iat[i + 3, random_tech_col_index] = new_min_value
+                    if T2 + C < 0:
+                        min_totalcap_df.iat[i + 3, random_tech_col_index] = 0
+                    else :
+                        min_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C
 
                 # Adjust the maximum capacity values for both max_technology and random_technology
-                new_max_value_max_tech = T1 - C
-                new_max_value_random_tech = T2 + C
-                max_totalcap_df.iat[i + 3, max_tech_col_index] = new_max_value_max_tech
-                max_totalcap_df.iat[i + 3, random_tech_col_index] = new_max_value_random_tech
+                max_totalcap_df.iat[i + 3, max_tech_col_index] = T1 - C
+                if T2 + C < 0:
+                    max_totalcap_df.iat[i + 3, random_tech_col_index] = 10**10
+                else :
+                    max_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C
 
         # Debugging: Print the modified DataFrames
         print("Modified Min_totalcap DataFrame:")
@@ -503,10 +510,10 @@ def modify_input_parameters_combine2(self, new_capacity_path, total_capacity_pat
 
         if reset_specific:
             # Reset capacity limits for the four technologies
-            max_tech_col_index = max_order
-            second_max_tech_col_index = second_max_order
-            random_tech_col_index = random_order
-            second_random_tech_col_index = second_random_order
+            max_tech_col_index = max_order 
+            second_max_tech_col_index = second_max_order 
+            random_tech_col_index = random_order 
+            second_random_tech_col_index = second_random_order 
 
             min_totalcap_df.iloc[3:, max_tech_col_index] = 0
             min_totalcap_df.iloc[3:, second_max_tech_col_index] = 0
@@ -523,23 +530,35 @@ def modify_input_parameters_combine2(self, new_capacity_path, total_capacity_pat
             years = min_totalcap_df.iloc[3:, 0].tolist()
 
             # Get the column indices for each technology
-            max_tech_col_index = max_order
-            random_tech_col_index = random_order
-            second_max_tech_col_index = second_max_order
-            second_random_tech_col_index = second_random_order
+            max_tech_col_index = max_order 
+            random_tech_col_index = random_order 
+            second_max_tech_col_index = second_max_order 
+            second_random_tech_col_index = second_random_order 
 
             # Loop through the years and modify the capacity values
             for i, year in enumerate(years):
                 if i == len(years) - 1:  # Only modify the last year for random technologies
                     # Adjust the minimum capacity for the random technologies
-                    min_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
-                    min_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
+                    if T2 + C1 < 0:
+                        min_totalcap_df.iat[i + 3, random_tech_col_index] = 0
+                    else :
+                        min_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
+                    if T4 + C2 < 0:
+                        min_totalcap_df.iat[i + 3, second_random_tech_col_index] = 0
+                    else :
+                        min_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
 
                 # Adjust the maximum capacity values for all max and random technologies
                 max_totalcap_df.iat[i + 3, max_tech_col_index] = T1 - C1
-                max_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
+                if T2 + C1 < 0:
+                    max_totalcap_df.iat[i + 3, random_tech_col_index] = 10**10
+                else :
+                    max_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
                 max_totalcap_df.iat[i + 3, second_max_tech_col_index] = T3 - C2
-                max_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
+                if T4 + C2 < 0: 
+                    max_totalcap_df.iat[i + 3, second_random_tech_col_index] = 10**10
+                else :
+                    max_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
 
         # Debugging: Print the modified DataFrames
         print("Modified Min_totalcap DataFrame:")
@@ -667,17 +686,35 @@ def modify_input_parameters_combine3(self, new_capacity_path, total_capacity_pat
             for i, year in enumerate(years):
                 if i == len(years) - 1:  # Only modify the last year for random technologies
                     # Adjust the minimum capacity for the random technologies
-                    min_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
-                    min_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
-                    min_totalcap_df.iat[i + 3, third_random_tech_col_index] = T6 + C3
+                    if T2 + C1 < 0:
+                        min_totalcap_df.iat[i + 3, random_tech_col_index] = 0
+                    else :
+                        min_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
+                    if T4 + C2 < 0:
+                        min_totalcap_df.iat[i + 3, second_random_tech_col_index] = 0
+                    else :
+                        min_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
+                    if T6 + C3 < 0:
+                        min_totalcap_df.iat[i + 3, third_random_tech_col_index] = 0
+                    else :
+                        min_totalcap_df.iat[i + 3, third_random_tech_col_index] = T6 + C3
 
                 # Adjust the maximum capacity values for all max technologies
                 max_totalcap_df.iat[i + 3, max_tech_col_index] = T1 - C1
-                max_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
+                if T2 + C1 < 0:
+                    max_totalcap_df.iat[i + 3, random_tech_col_index] = 10**10
+                else :
+                    max_totalcap_df.iat[i + 3, random_tech_col_index] = T2 + C1
                 max_totalcap_df.iat[i + 3, second_max_tech_col_index] = T3 - C2
-                max_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
+                if T4 + C2 < 0: 
+                    max_totalcap_df.iat[i + 3, second_random_tech_col_index] = 10**10
+                else :
+                    max_totalcap_df.iat[i + 3, second_random_tech_col_index] = T4 + C2
                 max_totalcap_df.iat[i + 3, third_max_tech_col_index] = T5 - C3
-                max_totalcap_df.iat[i + 3, third_random_tech_col_index] = T6 + C3
+                if T6 + C3 < 0:
+                    max_totalcap_df.iat[i + 3, third_random_tech_col_index] = 10**10
+                else :
+                    max_totalcap_df.iat[i + 3, third_random_tech_col_index] = T6 + C3
 
         # Debugging: Print the modified DataFrames
         print("Modified Min_totalcap DataFrame:")
@@ -770,7 +807,7 @@ def run_with_adjustments(self, new_capacity_path, total_capacity_path, param_pat
             C = initial_C - (0.05 * initial_C * attempt)
 
             # Change random technology if too many attempts are made
-            if attempt % 10 == 0 or C <= 0:
+            if attempt % 20 == 0 or C <= 0:
                 return self.run_with_adjustments3(
                     new_capacity_path,
                     total_capacity_path,
@@ -822,10 +859,6 @@ def run_with_adjustments2(self, new_capacity_path, total_capacity_path, param_pa
             max_technologies, random_technologies,
             technologies_list) = self.find_technologies(new_capacity_path, technology_order_mapping)
 
-        # # Get values for secondary technologies
-        # a1 = next((value for tech, value, _ in technologies_list if tech == second_max_technology), 0)
-        # b1 = next((value for tech, value, _ in technologies_list if tech == second_random_technology), 0)
-
         # Get last-year values for primary and secondary technologies
         _, T1, T2 = self.find_last_year_values(total_capacity_path, max_technology, random_technology)
         _, T3, T4 = self.find_last_year_values(total_capacity_path, second_max_technology, second_random_technology)
@@ -864,7 +897,7 @@ def run_with_adjustments2(self, new_capacity_path, total_capacity_path, param_pa
             C2 = initial_C2 - (0.05 * initial_C2 * attempt)
 
             # Change random technologies if too many attempts are made
-            if attempt % 10 == 0 or C1 <= 0 or C2 <= 0:
+            if attempt % 20 == 0 or C1 <= 0 or C2 <= 0:
                 return self.run_with_adjustments3(
                     new_capacity_path,
                     total_capacity_path,
@@ -904,12 +937,6 @@ def run_with_adjustments3(self, new_capacity_path, total_capacity_path, param_pa
             third_random_technology, u3, third_random_tech_order,
             max_technologies, random_technologies,
             technologies_list) = self.find_technologies(new_capacity_path, technology_order_mapping)
-
-        # # Get values for secondary and tertiary technologies
-        # a1 = next((value for tech, value, _ in technologies_list if tech == second_max_technology), 0)
-        # b1 = next((value for tech, value, _ in technologies_list if tech == second_random_technology), 0)
-        # c1 = next((value for tech, value, _ in technologies_list if tech == third_max_technology), 0)
-        # d1 = next((value for tech, value, _ in technologies_list if tech == third_random_technology), 0)
 
         # Get last-year values for all technologies
         _, T1, T2 = self.find_last_year_values(total_capacity_path, max_technology, random_technology)
@@ -961,7 +988,7 @@ def run_with_adjustments3(self, new_capacity_path, total_capacity_path, param_pa
             C3 = initial_C3 - (0.05 * initial_C3 * attempt)
 
             # Change random technologies if too many attempts are made
-            if attempt % 10 == 0 or C1 <= 0 or C2 <= 0 or C3 <= 0:
+            if attempt % 20 == 0 or C1 <= 0 or C2 <= 0 or C3 <= 0:
                 # Start the function over again
                 return self.run_with_adjustments3(
                     new_capacity_path,
